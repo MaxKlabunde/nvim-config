@@ -608,7 +608,15 @@ require('lazy').setup({
       --  See `:help lsp-config` for information about keys and how to configure
       local servers = {
         jdtls = {},
-        -- clangd = {},
+        clangd = {},        -- C++
+        pyright = {},       -- Python
+        bashls = {},        -- Bash
+        omnisharp = {},     -- C# / .NET
+        groovyls = {},      -- Groovy / Jenkinsfile
+        lemminx = {},       -- XML / Maven (pom.xml)
+        yamlls = {},        -- YAML / Kubernetes / CI
+        jsonls = {},        -- JSON
+        tclint = {},        -- TCL
         -- gopls = {},
         -- pyright = {},
         -- rust_analyzer = {},
@@ -632,6 +640,10 @@ require('lazy').setup({
         'jdtls', -- Java Language Server
         'lua-language-server', -- Lua Language server
         'stylua', -- Used to format Lua code
+        'black', -- Python formatter
+        'isort', -- Python imports
+        'shfmt', -- Bash formatter
+        'clang-format', -- C/C++ formatter
         -- You can add other tools here that you want Mason to install
       })
 
@@ -702,6 +714,10 @@ require('lazy').setup({
       end,
       formatters_by_ft = {
         lua = { 'stylua' },
+        python = { 'isort', 'black' },
+        bash = { 'shfmt' },
+        c = { 'clang-format' },
+        cpp = { 'clang-format' },
         -- Conform can also run multiple formatters sequentially
         -- python = { "isort", "black" },
         --
