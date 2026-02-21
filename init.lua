@@ -102,7 +102,7 @@ vim.g.have_nerd_font = false
 vim.o.number = true
 -- You can also add relative line numbers, to help with jumping.
 --  Experiment for yourself to see if you like it!
-vim.o.relativenumber = true
+vim.o.relativenumber = false
 
 -- Enable mouse mode, can be useful for resizing splits for example!
 vim.o.mouse = 'a'
@@ -194,6 +194,13 @@ vim.diagnostic.config {
 }
 
 vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = 'Open diagnostic [Q]uickfix list' })
+
+-- Toggles for Diagnostics
+vim.keymap.set('n', '<leader>td', function()
+  local is_enabled = vim.diagnostic.is_enabled()
+  vim.diagnostic.enable(not is_enabled)
+  vim.notify('Diagnostics ' .. (is_enabled and 'Disabled' or 'Enabled'))
+end, { desc = '[T]oggle [D]iagnostics' })
 
 -- Exit terminal mode in the builtin terminal with a shortcut that is a bit easier
 -- for people to discover. Otherwise, you normally need to press <C-\><C-n>, which
@@ -831,21 +838,18 @@ require('lazy').setup({
     -- change the command in the config to whatever the name of that colorscheme is.
     --
     -- If you want to see what colorschemes are already installed, you can use `:Telescope colorscheme`.
-    'folke/tokyonight.nvim',
-    priority = 1000, -- Make sure to load this before all the other start plugins.
-    config = function()
-      ---@diagnostic disable-next-line: missing-fields
-      require('tokyonight').setup {
-        styles = {
-          comments = { italic = false }, -- Disable italics in comments
-        },
-      }
 
-      -- Load the colorscheme here.
-      -- Like many other themes, this one has different styles, and you could load
-      -- any other, such as 'tokyonight-storm', 'tokyonight-moon', or 'tokyonight-day'.
-      vim.o.background = 'dark'
-      vim.cmd.colorscheme 'tokyonight-night'
+    -- Load the colorscheme here.
+    -- Like many other themes, this one has different styles, and you could load
+    'marcinbarylka/campbell-dark.nvim',
+    lazy = false, -- make sure we load this during startup
+    priority = 1000, -- make sure to load this before all the other start plugins
+    config = function()
+      -- Enable true color
+      vim.opt.termguicolors = true
+
+      -- Load the colorscheme
+      vim.cmd.colorscheme 'campbell-dark'
     end,
   },
 
