@@ -445,6 +445,12 @@ require('lazy').setup({
         callback = function(event)
           local buf = event.buf
 
+          -- This ensures that the LSP does not overwrite the Campbell coloring
+          local client = vim.lsp.get_client_by_id(event.data.client_id)
+          if client then
+            client.server_capabilities.semanticTokensProvider = nil
+          end
+
           -- Find references for the word under your cursor.
           vim.keymap.set('n', 'grr', builtin.lsp_references, { buffer = buf, desc = '[G]oto [R]eferences' })
 
@@ -885,19 +891,25 @@ require('lazy').setup({
     end,
   },
 
-  { -- Highlight, edit, and navigate code
+{ -- Highlight, edit, and navigate code
     'nvim-treesitter/nvim-treesitter',
+    branch = 'master',
+    build = ':TSUpdate',
     config = function()
-      local filetypes = { 'bash', 'c', 'diff', 'html', 'lua', 'luadoc', 'markdown', 'markdown_inline', 'query', 'vim', 'vimdoc' }
-      require('nvim-treesitter').install(filetypes)
-      vim.api.nvim_create_autocmd('FileType', {
-        pattern = filetypes,
-        callback = function() vim.treesitter.start() end,
+      require('nvim-treesitter.configs').setup({
+        ensure_installed = { 'bash', 'c', 'cpp', 'java', 'python', 'tcl', 'diff', 'html', 'lua', 'luadoc', 'markdown', 'markdown_inline', 'query', 'vim', 'vimdoc' },
+        -- Automatically install missing parsers when entering buffer
+        auto_install = true,
+        highlight = {
+          enable = true,
+          additional_vim_regex_highlighting = false, -- Stops the old legacy engine from fighting
+        },
+        indent = { enable = true },
       })
     end,
   },
 
-  -- The following comments only work if you have downloaded the kickstart repo, not just copy pasted the
+ -- The following comments only work if you have downloaded the kickstart repo, not just copy pasted the
   -- init.lua. If you want these files, they are in the repository, so you can just download them and
   -- place them in the correct locations.
 
