@@ -250,6 +250,19 @@ vim.api.nvim_create_autocmd('TextYankPost', {
   callback = function() vim.hl.on_yank() end,
 })
 
+vim.api.nvim_create_autocmd('ColorScheme', {
+  desc = 'Use reverse syntax colors for visual selection',
+  group = vim.api.nvim_create_augroup('user-visual-highlight', { clear = true }),
+  callback = function() vim.api.nvim_set_hl(0, 'Visual', { reverse = true, fg = 'none', bg = 'none' }) end,
+})
+
+-- Highlighting in syntax color
+vim.api.nvim_set_hl(0, 'Visual', {
+    reverse = true,
+    fg = 'none',
+    bg = 'none'
+})
+
 -- [[ Install `lazy.nvim` plugin manager ]]
 --    See `:help lazy.nvim.txt` or https://github.com/folke/lazy.nvim for more info
 local lazypath = vim.fn.stdpath 'data' .. '/lazy/lazy.nvim'
