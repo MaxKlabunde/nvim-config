@@ -192,12 +192,30 @@ vim.diagnostic.config {
   underline = { severity = vim.diagnostic.severity.ERROR },
 
   -- Can switch between these as you prefer
-  virtual_text = true, -- Text shows up at the end of the line
-  virtual_lines = false, -- Teest shows up underneath the line, with virtual lines
+  virtual_text = false, -- Text shows up at the end of the line
+  virtual_lines = false, -- Text shows up underneath the line, with virtual lines
 
   -- Auto open the float, so you can easily read the errors when jumping with `[d` and `]d`
   jump = { float = true },
 }
+
+-- Toggle and Auto-Show logic for Diagnostic Float
+local auto_float_enabled = true
+vim.api.nvim_create_autocmd('CursorHold', {
+  desc = 'Show diagnostic float on CursorHold',
+  callback = function()
+    if auto_float_enabled then
+      vim.diagnostic.open_float(nil, { focus = false })
+    end
+  end,
+})
+
+vim.keymap.set('n', '<leader>tf', function()
+  auto_float_enabled = not auto_float_enabled
+  vim.notify('Auto Diagnostic Float ' .. (auto_float_enabled and 'Enabled' or 'Disabled'))
+end, { desc = '[T]oggle Auto [F]loat' })
+
+vim.keymap.set('n', '<leader>e', vim.diagnostic.open_float, { desc = 'Show diagnostic [E]rror messages' })
 
 vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = 'Open diagnostic [Q]uickfix list' })
 
