@@ -1,5 +1,9 @@
 return {
   "christoomey/vim-tmux-navigator",
+  init = function()
+    ---@diagnostic disable-next-line: undefined-global
+    vim.g.tmux_navigator_no_wrap = 1
+  end,
   cmd = {
     "TmuxNavigateLeft",
     "TmuxNavigateDown",
