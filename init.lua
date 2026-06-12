@@ -778,6 +778,17 @@ require('lazy').setup({
     },
   },
 
+  -- Markdown preview plugin
+  {
+    "iamcco/markdown-preview.nvim",
+    cmd = { "MarkdownPreviewToggle", "MarkdownPreview", "MarkdownPreviewStop" },
+    build = "cd app && npm install",
+    init = function()
+      vim.g.mkdp_filetypes = { "markdown" }
+    end,
+    ft = { "markdown" },
+  },
+
   { -- Autocompletion
     'saghen/blink.cmp',
     event = 'VimEnter',
@@ -882,12 +893,30 @@ require('lazy').setup({
     'marcinbarylka/campbell-dark.nvim',
     lazy = false, -- make sure we load this during startup
     priority = 1000, -- make sure to load this before all the other start plugins
+    dependencies = {
+      -- Light-mode colorscheme (tokyonight 'day' style). campbell-dark has no
+      -- light variant, so we pair it with tokyonight for "light mode".
+      'folke/tokyonight.nvim',
+    },
     config = function()
       -- Enable true color
       vim.opt.termguicolors = true
 
-      -- Load the colorscheme
+      -- Default to dark mode on startup
+      vim.opt.background = 'dark'
       vim.cmd.colorscheme 'campbell-dark'
+
+      -- Switch between dark (campbell-dark) and light (tokyonight-day) modes.
+      -- Use `:Light` and `:Dark` to toggle.
+      vim.api.nvim_create_user_command('Light', function()
+        vim.opt.background = 'light'
+        vim.cmd.colorscheme 'tokyonight-day'
+      end, { desc = 'Switch to light mode' })
+
+      vim.api.nvim_create_user_command('Dark', function()
+        vim.opt.background = 'dark'
+        vim.cmd.colorscheme 'campbell-dark'
+      end, { desc = 'Switch to dark mode' })
     end,
   },
 
