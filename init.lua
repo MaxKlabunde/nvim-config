@@ -104,8 +104,10 @@ vim.o.number = true
 --  Experiment for yourself to see if you like it!
 vim.o.relativenumber = true
 
--- Enable mouse mode, can be useful for resizing splits for example!
-vim.o.mouse = 'a'
+-- Mouse OFF: let the terminal own the mouse, so drag-select is a *terminal*
+-- selection you can copy to the host clipboard (like plain vim), instead of
+-- nvim grabbing the drag as a visual selection. See `:help 'mouse'`.
+vim.o.mouse = ''
 
 -- Don't show the mode, since it's already in the status line
 vim.o.showmode = false
@@ -118,12 +120,16 @@ vim.o.clipboard = 'unnamedplus'
 
 -- Über SSH (z.B. Linux-VM): Yank ins Host-Clipboard via OSC 52.
 -- Lokal (kein SSH) wird der Block übersprungen → normaler System-Provider (pbcopy).
+-- Copy geht per OSC 52 raus; Paste liest das lokale Register (nvim's letzter Yank).
+-- OSC-52-Read wird von den meisten Terminals (inkl. Windows Terminal) blockiert,
+-- ein echtes Terminal-Query würde den Paste sonst bis zum Timeout hängen lassen.
 if os.getenv('SSH_TTY') then
   local osc52 = require('vim.ui.clipboard.osc52')
+  local function paste() return vim.split(vim.fn.getreg('"'), '\n') end
   vim.g.clipboard = {
     name = 'OSC 52',
     copy  = { ['+'] = osc52.copy('+'),  ['*'] = osc52.copy('*')  },
-    paste = { ['+'] = osc52.paste('+'), ['*'] = osc52.paste('*') },
+    paste = { ['+'] = paste,            ['*'] = paste            },
   }
 end
 
@@ -287,6 +293,21 @@ vim.api.nvim_set_hl(0, 'Visual', {
     reverse = true,
     fg = 'none',
     bg = 'none'
+})
+
+-- Match the terminal's background (Ghostty #282c34 / Windows Terminal).
+-- Terminal Neovim can't pick a font, so it already renders in Ghostty's font;
+-- clearing the background lets the terminal's bg show through instead of the
+-- colorscheme painting its own. Dark themes only, so `:Light` stays readable.
+vim.api.nvim_create_autocmd('ColorScheme', {
+  desc = 'Transparent background so the terminal shows through (dark themes only)',
+  group = vim.api.nvim_create_augroup('user-transparent-bg', { clear = true }),
+  callback = function()
+    if vim.o.background ~= 'dark' then return end
+    for _, group in ipairs { 'Normal', 'NormalNC', 'SignColumn', 'EndOfBuffer' } do
+      vim.api.nvim_set_hl(0, group, { bg = 'none' })
+    end
+  end,
 })
 
 -- [[ Install `lazy.nvim` plugin manager ]]
@@ -675,7 +696,8 @@ require('lazy').setup({
         lemminx = {},       -- XML / Maven (pom.xml)
         yamlls = {},        -- YAML / Kubernetes / CI
         jsonls = {},        -- JSON
-        tclint = {},        -- TCL
+        -- TCL: handled below via bitwisecook/tcl-lsp (full LSP incl. goto-definition).
+        -- (The old `tclsp` from tclint was lint+format only — no `grd`.)
         -- gopls = {},
         -- pyright = {},
         -- rust_analyzer = {},
@@ -745,6 +767,24 @@ require('lazy').setup({
         },
       })
       vim.lsp.enable 'lua_ls'
+
+      -- TCL: bitwisecook/tcl-lsp — a full Tcl language server (goto-definition,
+      -- references, hover, completion, rename) shipped as a .pyz zipapp.
+      -- It is NOT on Mason/PyPI, so it's installed out-of-band by
+      -- `scripts/install-tcl-lsp.sh` into a machine-independent path. That keeps
+      -- this setup reproducible: on another machine just `git pull` this config
+      -- and run the script once. Guarded so nvim doesn't error before install.
+      local tcl_pyz = vim.fn.stdpath 'data' .. '/tcl-lsp/tcl-lsp-server.pyz'
+      if vim.uv.fs_stat(tcl_pyz) then
+        vim.lsp.config('tcl_lsp', {
+          cmd = { 'python3', tcl_pyz },
+          filetypes = { 'tcl' },
+          root_markers = { 'tclint.toml', '.tclint', 'pyproject.toml', '.git' },
+        })
+        vim.lsp.enable 'tcl_lsp'
+      else
+        vim.notify('tcl-lsp not installed — run scripts/install-tcl-lsp.sh', vim.log.levels.WARN)
+      end
     end,
   },
 

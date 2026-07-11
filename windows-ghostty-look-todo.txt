@@ -1,0 +1,63 @@
+WINDOWS TERMINAL — GET THE GHOSTTY LOOK (TODO)
+==============================================
+
+Goal: make PowerShell in Windows Terminal (and nvim inside it) look like Ghostty
+on the Mac — same font, same #282c34 background, no ligature merging.
+
+Reference values (Ghostty defaults):
+  font-family = JetBrains Mono   (Ghostty's bundled default)
+  background  = #282C34
+  foreground  = #FFFFFF
+  ligatures   = OFF  (-calt -liga -dlig)
+
+Note: nvim needs NO font/background setup on Windows. Terminal nvim uses the
+terminal's font, and its background is already transparent (set in init.lua),
+so it inherits whatever Windows Terminal shows. Just set up the terminal.
+
+--------------------------------------------------------------------
+[ ] 1. Install the font on Windows
+    - Download JetBrains Mono:  https://www.jetbrains.com/lp/mono/
+    - (Optional, for icons) download "JetBrainsMono Nerd Font" instead:
+        https://www.nerdfonts.com/font-downloads
+      If you use the Nerd Font, also set have_nerd_font = true at
+      ~/.config/nvim/init.lua line 94 so Telescope/statusline show icons.
+    - Unzip, select the .ttf files, right-click > Install (for all users).
+
+[ ] 2. Open Windows Terminal settings.json
+    - Windows Terminal > drop-down (v) > Settings > bottom-left "Open JSON file"
+    - (Or Ctrl+Shift+, )
+
+[ ] 3. Paste the config below
+    Put it inside your PowerShell profile in "profiles" > "list",
+    OR inside "profiles" > "defaults" to apply it to every profile:
+
+        {
+            "font": {
+                "face": "JetBrains Mono",
+                "features": { "calt": 0, "liga": 0, "dlig": 0 }
+            },
+            "background": "#282C34",
+            "foreground": "#FFFFFF"
+        }
+
+    - "features" with calt/liga/dlig = 0 disables ligatures, so <= and ->
+      stay as two characters (mirrors the Ghostty -calt/-liga/-dlig setting).
+    - If you installed the Nerd Font, use "face": "JetBrainsMono Nerd Font".
+
+[ ] 4. Save the file. Windows Terminal applies changes immediately.
+
+[ ] 5. Verify
+    - Shell background should be the charcoal #282C34 (not black).
+    - Type  <=  and  ->  — they must render as two separate characters.
+    - Open nvim: its background should match the shell (transparent bg
+      inheriting #282C34), same font.
+
+--------------------------------------------------------------------
+TROUBLESHOOTING
+    - Font not listed / not applying: confirm the .ttf actually installed
+      (Windows Settings > Personalization > Fonts, search "JetBrains").
+    - Background looks black in nvim but fine in the shell: make sure the
+      transparent-bg edit is present in init.lua (autocmd group
+      "user-transparent-bg") and that you're in dark mode (:Dark).
+    - Ligatures still merging: double-check the "features" block is inside
+      the "font" object, not at the profile top level.
