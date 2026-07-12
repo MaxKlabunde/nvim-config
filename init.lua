@@ -249,6 +249,43 @@ end, { desc = '[T]oggle [D]iagnostics' })
 vim.keymap.set('t', '<Esc><Esc>', '<C-\\><C-n>', { desc = 'Exit terminal mode' })
 vim.keymap.set('t', 'jj', [[<C-\><C-n>]], { desc = 'Exit terminal mode with jj' })
 
+-- Navigate out of a terminal with <C-h/j/k/l>, same as between normal windows
+-- (routed through vim-tmux-navigator, so it also crosses into tmux panes).
+-- Trade-off: these chords no longer reach the shell while focused in a terminal
+-- (notably <C-l> "clear" and <C-k> "kill line") — use `clear`, etc. instead.
+vim.keymap.set('t', '<C-h>', [[<C-\><C-n><Cmd>TmuxNavigateLeft<CR>]], { desc = 'Terminal: focus left window' })
+vim.keymap.set('t', '<C-j>', [[<C-\><C-n><Cmd>TmuxNavigateDown<CR>]], { desc = 'Terminal: focus lower window' })
+vim.keymap.set('t', '<C-k>', [[<C-\><C-n><Cmd>TmuxNavigateUp<CR>]], { desc = 'Terminal: focus upper window' })
+vim.keymap.set('t', '<C-l>', [[<C-\><C-n><Cmd>TmuxNavigateRight<CR>]], { desc = 'Terminal: focus right window' })
+
+-- Toggle a persistent terminal in a LEFT vertical sidebar with <leader>tt.
+-- Hiding it (same key) keeps the shell running; reopening reuses the session.
+local term = { win = nil, buf = nil }
+local function toggle_term()
+  if term.win and vim.api.nvim_win_is_valid(term.win) then
+    vim.api.nvim_win_hide(term.win) -- hide only; shell keeps running
+    term.win = nil
+    return
+  end
+  vim.cmd 'topleft vsplit' -- far-left vertical sidebar
+  vim.cmd('vertical resize ' .. math.floor(vim.o.columns / 2)) -- half the screen width
+  term.win = vim.api.nvim_get_current_win()
+  if term.buf and vim.api.nvim_buf_is_valid(term.buf) then
+    vim.api.nvim_win_set_buf(term.win, term.buf) -- reuse the same terminal
+  else
+    vim.cmd 'terminal'
+    term.buf = vim.api.nvim_get_current_buf()
+    -- Single <Esc> exits terminal mode in THIS scratch terminal only (buffer-local),
+    -- so we don't globally swallow <Esc> that TUIs (fzf, less, ...) need.
+    vim.keymap.set('t', '<Esc>', [[<C-\><C-n>]], { buffer = term.buf, desc = 'Exit terminal mode' })
+  end
+  vim.cmd 'startinsert'
+end
+-- Normal mode only: a <leader> (space) mapping in terminal mode would add a
+-- ~timeoutlen delay to every space typed in the shell. Close from inside the
+-- terminal with <Esc> (→ normal mode), then <leader>tt.
+vim.keymap.set('n', '<leader>tt', toggle_term, { desc = '[T]oggle [T]erminal (left sidebar)' })
+
 -- TIP: Disable arrow keys in normal mode
 -- vim.keymap.set('n', '<left>', '<cmd>echo "Use h to move!!"<CR>')
 -- vim.keymap.set('n', '<right>', '<cmd>echo "Use l to move!!"<CR>')
